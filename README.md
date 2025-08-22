@@ -1,3 +1,13 @@
+
+# SNES Mouse
+
+Game Boy minesweeper clone by Alb05 - modified to add support for the Super Nintendo Mouse over the link port.
+
+(for Hyperkin Mouse hold SELECT during on startup)
+
+See original repo: https://github.com/Alb05/mine
+
+-------------------
 # Minesweeper Clone
 
 Minesweeper clone for the Nintendo GameBoy.
