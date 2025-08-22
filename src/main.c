@@ -13,6 +13,9 @@
 #include "maps/WindowMap.h"
 #include "maps/CreditsMap.h"
 
+#include "mouse.h"
+#include "snes_mouse.h"
+
 
 #define NUM_CELLS ((uint16_t)360U)
 #define CURSOR ((uint8_t)0U)
@@ -136,6 +139,10 @@ void resetGame(Cell* const cells, const Cell* const firstCell, const Cell* const
 
   do
   {
+    mouse_update();
+    if (mouse_button_clicked(SNES_MOUSE_BUTTON_LEFT))
+        break;
+
     *buttonPressed = false;
     joypad_ex(jp);
     if (jp->joy0 & J_DOWN)
@@ -221,6 +228,10 @@ void waitForInput(joypads_t* const jp, const uint8_t button)
 {
   do
   {
+    mouse_update();
+    if (mouse_button_clicked(SNES_MOUSE_BUTTON_LEFT))
+        break;
+
     joypad_ex(jp);
     vsync();
   } while ((jp->joy0 & button) == 0U);
@@ -253,10 +264,10 @@ void fadein(void)
 {
   BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_WHITE, DMG_WHITE, DMG_LITE_GRAY);
   vsync();
-  delay(200U);
+  delay(100U);
   BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_WHITE, DMG_LITE_GRAY, DMG_DARK_GRAY);
   vsync();
-  delay(200U);
+  delay(100U);
   BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_LITE_GRAY, DMG_DARK_GRAY, DMG_BLACK);
   vsync();
 }
@@ -266,10 +277,10 @@ void fadeout(void)
 {
   BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_WHITE, DMG_LITE_GRAY, DMG_DARK_GRAY);
   vsync();
-  delay(200U);
+  delay(100U);
   BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_WHITE, DMG_WHITE, DMG_LITE_GRAY);
   vsync();
-  delay(200U);
+  delay(100U);
   BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_WHITE, DMG_WHITE, DMG_WHITE);
   vsync();
 }
@@ -312,7 +323,7 @@ void main(void)
 
   fadein();
 
-  delay(3000U);
+  delay(500U);
 
   fadeout();
 
@@ -328,6 +339,9 @@ void main(void)
   DISPLAY_ON;
 
   fadein();
+
+  mouse_init();
+  if (joypad() & J_SELECT) snes_mouse_set_model(SNES_MOUSE_HYPERKIN);
 
   waitForInput(&jp, J_START);
 
@@ -346,6 +360,7 @@ void main(void)
   seed |= (uint16_t)DIV_REG << 8U;
   initarand(seed);
   
+
   while (true)
   {
     resetGame(cells, firstCell, lastCell, &gameOver, &revealed, &cursorX, &cursorY, &jp, &numMines, &minesLeft, &buttonPressed);
@@ -354,8 +369,12 @@ void main(void)
     {
       buttonPressed = false;
       joypad_ex(&jp);
+      mouse_update();
+
       if (!windowState)
       {
+
+
         if (jp.joy0 & J_UP)
         {
           cursorY -= 8U;
@@ -386,17 +405,33 @@ void main(void)
 
           move_sprite(CURSOR, cursorX, cursorY);
         }
-        index = ((((cursorY - 16U)>>3U)*20U) + ((cursorX - 8U)>>3U));
+        index = ((((cursorY - DEVICE_SPRITE_PX_OFFSET_Y)>>3U)*20U) + ((cursorX - DEVICE_SPRITE_PX_OFFSET_X)>>3U));
+
+        uint8_t mouse_cursorX = (MOUSE_X() & 0xF8u);
+        uint8_t mouse_cursorY = (MOUSE_Y() & 0xF8u);
+        uint8_t index_mouse = ((((mouse_cursorY)>>3U)*20U) + ((mouse_cursorX)>>3U));
+
+
         if (jp.joy0 & J_A)
         {
           revealCell(((Cell*)(firstCell+index)), firstCell, &gameOver, &revealed, &numMines);
           buttonPressed = true;
         }
+        else if (mouse_button_clicked(SNES_MOUSE_BUTTON_LEFT))
+        {
+          revealCell(((Cell*)(firstCell + index_mouse)), firstCell, &gameOver, &revealed, &numMines);
+        }
+
         if (jp.joy0 & J_B)
         {
           setFlag(((Cell*)(firstCell+index)), cursorX, cursorY, &minesLeft);
           buttonPressed = true;
         }
+        else if (mouse_button_clicked(SNES_MOUSE_BUTTON_RIGHT)) {
+            // The offsets are to compensate for the flag func trying to compensate for them
+          setFlag(((Cell*)(firstCell + index_mouse)), (MOUSE_X() & 0xF8u) + DEVICE_SPRITE_PX_OFFSET_X, (MOUSE_Y() & 0xF8u) +  + DEVICE_SPRITE_PX_OFFSET_Y, &minesLeft);
+        }
+
       }
       if (jp.joy0 & J_SELECT)
       {
