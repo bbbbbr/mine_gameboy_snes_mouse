@@ -21,7 +21,7 @@ LCCFLAGS += -Wl-w
 
 
 # You can set the name of the .gb ROM file here
-PROJECTNAME    = mine
+PROJECTNAME    = mine_snes_mouse
 
 SRCDIR      = src
 OBJDIR      = bin
