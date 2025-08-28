@@ -409,7 +409,7 @@ void main(void)
 
         uint8_t mouse_cursorX = (MOUSE_X() & 0xF8u);
         uint8_t mouse_cursorY = (MOUSE_Y() & 0xF8u);
-        uint8_t index_mouse = ((((mouse_cursorY)>>3U)*20U) + ((mouse_cursorX)>>3U));
+        uint16_t index_mouse = ((uint16_t)(mouse_cursorY >> 3U) * 20U) + (uint16_t)(mouse_cursorX >> 3U);
 
 
         if (jp.joy0 & J_A)
